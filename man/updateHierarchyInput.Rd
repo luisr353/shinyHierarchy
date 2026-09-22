@@ -2,28 +2,39 @@
 % Please edit documentation in R/updateHierarchyInput.R
 \name{updateHierarchyInput}
 \alias{updateHierarchyInput}
-\title{Change the value of a hierarchy input on the client}
+\title{Update a hierarchical input from the server}
 \usage{
 updateHierarchyInput(
   session = shiny::getDefaultReactiveDomain(),
   inputId,
-  label = NULL,
-  choices = NULL,
-  selected = NULL
+  data = NULL,
+  levels = NULL,
+  selected = NULL,
+  expanded = NULL,
+  clear = FALSE,
+  open = NULL
 )
 }
 \arguments{
-\item{session}{The \code{session} object passed to function given to \code{shinyServer}.
-Default is \code{getDefaultReactiveDomain()}.}
+\item{session}{Shiny session object.}
 
-\item{inputId}{The id of the input object.}
+\item{inputId}{The input id to update.}
 
-\item{label}{The label to set for the input object.}
+\item{data}{Optional new data frame.}
 
-\item{choices}{A nested list representing the hierarchy.}
+\item{levels}{Optional hierarchy column names (required if \code{data} is set).}
 
-\item{selected}{The selected node id(s).}
+\item{selected}{Optional vector of node ids to select (cascades to descendants).}
+
+\item{expanded}{Optional vector of node ids to expand.}
+
+\item{clear}{If \code{TRUE}, clears the current selection.}
+
+\item{open}{If \code{TRUE} or \code{FALSE}, opens or closes the dropdown panel.}
+}
+\value{
+No useful return value, invisibly \code{NULL}.
 }
 \description{
-Change the value of a hierarchy input on the client
+Update a hierarchical input from the server
 }

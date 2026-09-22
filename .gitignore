@@ -2,9 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-inst/doc
-docs
-Meta
-.httr-oauth
+*.Rproj
 .DS_Store
-.quarto
+node_modules/

@@ -1,0 +1,10 @@
+{
+  "name": "shinyHierarchy-dev",
+  "private": true,
+  "scripts": {
+    "test": "bun test tests/js"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^17.0.0"
+  }
+}

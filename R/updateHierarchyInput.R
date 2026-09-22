@@ -1,23 +1,55 @@
-#' Change the value of a hierarchy input on the client
+#' Update a hierarchical input from the server
 #'
-#' @param session The `session` object passed to function given to `shinyServer`.
-#'   Default is `getDefaultReactiveDomain()`.
-#' @param inputId The id of the input object.
-#' @param label The label to set for the input object.
-#' @param choices A nested list representing the hierarchy.
-#' @param selected The selected node id(s).
+#' @param session Shiny session object.
+#' @param inputId The input id to update.
+#' @param data Optional new data frame.
+#' @param levels Optional hierarchy column names (required if `data` is set).
+#' @param selected Optional vector of node ids to select (cascades to descendants).
+#' @param expanded Optional vector of node ids to expand.
+#' @param clear If `TRUE`, clears the current selection.
+#' @param open If `TRUE` or `FALSE`, opens or closes the dropdown panel.
 #'
+#' @return No useful return value, invisibly `NULL`.
 #' @export
-updateHierarchyInput <- function(session = shiny::getDefaultReactiveDomain(),
-                                 inputId,
-                                 label = NULL,
-                                 choices = NULL,
-                                 selected = NULL) {
-  message <- dropNulls(list(
-    label = label,
-    choices = if (!is.null(choices)) jsonlite::toJSON(choices, auto_unbox = TRUE),
-    selected = if (!is.null(selected)) jsonlite::toJSON(selected, auto_unbox = TRUE, null = "null")
-  ))
+updateHierarchyInput <- function(
+  session = shiny::getDefaultReactiveDomain(),
+  inputId,
+  data = NULL,
+  levels = NULL,
+  selected = NULL,
+  expanded = NULL,
+  clear = FALSE,
+  open = NULL
+) {
+  message <- list()
+
+  if (!is.null(data)) {
+    if (is.null(levels)) {
+      stop("`levels` must be supplied when `data` is supplied.", call. = FALSE)
+    }
+
+    tree <- buildHierarchyTree(data, levels)
+    message$tree <- tree
+    message$levels <- as.list(levels)
+  }
+
+  if (!is.null(selected)) {
+    message$selected <- as.character(selected)
+  }
+
+  if (!is.null(expanded)) {
+    message$expanded <- as.character(expanded)
+  }
+
+  if (isTRUE(clear)) {
+    message$clear <- TRUE
+  }
+
+  if (!is.null(open)) {
+    message$open <- isTRUE(open)
+  }
 
   session$sendInputMessage(inputId, message)
+
+  invisible(NULL)
 }

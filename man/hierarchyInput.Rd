@@ -2,63 +2,69 @@
 % Please edit documentation in R/hierarchyInput.R
 \name{hierarchyInput}
 \alias{hierarchyInput}
-\title{Create a hierarchy input control}
+\title{Hierarchical tree input for Shiny}
 \usage{
 hierarchyInput(
   inputId,
   label = NULL,
-  choices = list(),
+  data,
+  levels,
   selected = NULL,
-  multiple = FALSE,
-  width = NULL
+  expanded = NULL,
+  placeholder = "Selección múltiple",
+  display = c("inline", "dropdown"),
+  search = FALSE,
+  searchPlaceholder = "Buscar...",
+  selectAll = TRUE,
+  selectAllLabel = "Seleccionar todo",
+  expand = c("first", "all", "none"),
+  width = "100\%",
+  height = "360px"
 )
 }
 \arguments{
-\item{inputId}{The \code{input} slot that will be used to access the value.}
+\item{inputId}{The input slot that will be used to access the value.}
 
-\item{label}{Display label for the control, or \code{NULL} for no label.}
+\item{label}{Optional label displayed above the component.}
 
-\item{choices}{A nested list representing the hierarchy. Each node may
-contain \code{id}, \code{label}, and optional \code{children}.}
+\item{data}{A data frame containing the hierarchy columns.}
 
-\item{selected}{The initially selected node id(s).}
+\item{levels}{Character vector with column names, ordered from highest
+to lowest hierarchy level.}
 
-\item{multiple}{Whether multiple selections are allowed. Defaults to \code{FALSE}.}
+\item{selected}{Optional character vector of node ids to select initially.}
 
-\item{width}{The width of the input (e.g. \code{'100\%'}, \code{'400px'}).}
+\item{expanded}{Optional character vector of node ids to expand initially.}
+
+\item{placeholder}{Text shown when nothing is selected.}
+
+\item{display}{Visual presentation: \code{"inline"} keeps the tree visible,
+while \code{"dropdown"} opens it in a floating panel.}
+
+\item{search}{Whether to show a search box above the tree.}
+
+\item{searchPlaceholder}{Placeholder for the search field.}
+
+\item{selectAll}{Whether to show the select-all row.}
+
+\item{selectAllLabel}{Label for the select-all control.}
+
+\item{expand}{Initial expansion mode: first level, all levels, or none.}
+
+\item{width}{CSS width of the component.}
+
+\item{height}{CSS max-height of the tree area.}
 }
 \value{
-A Shiny UI tag that can be included in a UI definition.
+A Shiny HTML object.
 }
 \description{
-Creates a hierarchical tree input that allows users to navigate and select
-nodes from a nested data structure.
+Creates a hierarchical slicer-style input similar to a Power BI date
+hierarchy. The input value is a structured object (schema version 1) with
+\code{resolved}, \code{rollup}, \code{explicit}, and \code{summary} fields.
 }
-\examples{
-if (interactive()) {
-  library(shiny)
-  library(shinyHierarchy)
-
-  choices <- list(
-    list(
-      id = "a",
-      label = "Group A",
-      children = list(
-        list(id = "a1", label = "Item A1"),
-        list(id = "a2", label = "Item A2")
-      )
-    ),
-    list(id = "b", label = "Group B")
-  )
-
-  ui <- fluidPage(
-    hierarchyInput("tree", "Select a node", choices)
-  )
-
-  server <- function(input, output, session) {
-    observe(print(input$tree))
-  }
-
-  shinyApp(ui, server)
-}
+\details{
+The value received from the browser is user-controlled and must not be used
+as an authorization mechanism. Applications that filter sensitive data must
+validate selected ids against the server-side hierarchy and permissions.
 }

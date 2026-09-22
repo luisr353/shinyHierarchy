@@ -1,56 +1,54 @@
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 # shinyHierarchy
 
-<!-- badges: start -->
-<!-- badges: end -->
+Hierarchical slicer-style input for Shiny, inspired by Power BI date hierarchies.
 
-Custom Shiny input for navigating and selecting values from hierarchical data structures.
+## Features
 
-## Installation
-
-You can install the development version of shinyHierarchy from a local clone:
-
-``` r
-# install.packages("devtools")
-devtools::install(".")
-```
+- Multi-level tree from a data frame and `levels`
+- Inline Power BI-style slicer or compact dropdown
+- Optional search and select-all row
+- Cascading checkboxes with tri-state parents
+- Structured Shiny value (`schema_version = 1`) with `resolved`, `rollup`, `explicit`, and `summary`
 
 ## Example
 
-``` r
+```r
 library(shiny)
 library(shinyHierarchy)
 
-choices <- list(
-  list(
-    id = "a",
-    label = "Group A",
-    children = list(
-      list(id = "a1", label = "Item A1"),
-      list(id = "a2", label = "Item A2")
-    )
-  ),
-  list(id = "b", label = "Group B")
+df <- data.frame(
+  year = c(2026, 2026),
+  month = c("January", "January"),
+  day = c(1, 2)
 )
 
 ui <- fluidPage(
-  hierarchyInput("tree", "Select a node", choices),
-  verbatimTextOutput("value")
+  hierarchyInput(
+    "dates",
+    "Año, Mes, Día",
+    df,
+    c("year", "month", "day"),
+    display = "inline"
+  )
 )
 
 server <- function(input, output, session) {
-  output$value <- renderPrint(input$tree)
+  observe(print(hierarchyResolved(input$dates)))
 }
 
 shinyApp(ui, server)
 ```
 
-## Development
+Run the packaged example with `shiny::runApp(system.file("examples", package = "shinyHierarchy"))`.
 
-``` r
-devtools::load_all()
-devtools::document()
-devtools::test()
-devtools::check()
-```
+The same component works with arbitrary levels, for example
+`c("country", "department", "city")` or
+`c("category", "subcategory", "product")`. Search is disabled by default and
+can be enabled with `search = TRUE` for large hierarchies.
+
+## Security
+
+Values received through `input$...` are controlled by the browser. Validate
+selected ids against the server-side hierarchy and user permissions before
+using them to access sensitive data. Component dimensions accept only safe CSS
+lengths such as `"350px"`, `"100%"`, or `"20rem"`.

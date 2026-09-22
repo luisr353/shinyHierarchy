@@ -1,96 +1,150 @@
 (function () {
   "use strict";
 
-  var hierarchyBinding = new Shiny.InputBinding();
-
-  function parseJSON(value, fallback) {
-    if (value == null || value === "") {
-      return fallback;
-    }
-    try {
-      return JSON.parse(value);
-    } catch (e) {
-      return fallback;
-    }
-  }
+  const hierarchyBinding = new Shiny.InputBinding();
 
   $.extend(hierarchyBinding, {
     find: function (scope) {
       return $(scope).find(".shiny-hierarchy-input");
     },
 
-    initialize: function (el) {
-      var container = el.querySelector(".hierarchy-container");
-      if (!container) {
-        return;
-      }
-
-      var choices = parseJSON(container.getAttribute("data-choices"), []);
-      var selected = parseJSON(container.getAttribute("data-selected"), null);
-      var multiple = container.getAttribute("data-multiple") === "true";
-
-      el._hierarchyTree = new ShinyHierarchy.HierarchyTree(container, {
-        choices: choices,
-        selected: selected,
-        multiple: multiple,
-        onChange: function () {
-          $(el).trigger("change");
-        }
-      });
+    getId: function (element) {
+      return element.id;
     },
 
-    getValue: function (el) {
-      if (!el._hierarchyTree) {
+    getType: function () {
+      return "shinyHierarchy.value";
+    },
+
+    getValue: function (element) {
+      if (!window.shinyHierarchy) {
         return null;
       }
-      return el._hierarchyTree.selected;
+      return window.shinyHierarchy.buildValue(element);
     },
 
-    setValue: function (el, value) {
-      if (el._hierarchyTree) {
-        el._hierarchyTree.setSelected(value);
-      }
-    },
-
-    receiveMessage: function (el, data) {
-      if (data.label !== undefined) {
-        var label = el.querySelector("label.control-label");
-        if (label) {
-          label.textContent = data.label;
-        }
-      }
-
-      if (!el._hierarchyTree) {
+    setValue: function (element, value) {
+      if (!window.shinyHierarchy) {
         return;
       }
 
-      if (data.choices !== undefined) {
-        var choices = typeof data.choices === "string"
-          ? parseJSON(data.choices, [])
-          : data.choices;
-        el._hierarchyTree.setChoices(choices);
+      if (Array.isArray(value)) {
+        window.shinyHierarchy.applySelectedIds(element, value);
+        return;
       }
 
-      if (data.selected !== undefined) {
-        var selected = typeof data.selected === "string"
-          ? parseJSON(data.selected, null)
-          : data.selected;
-        el._hierarchyTree.setSelected(selected);
+      if (value && value.schema_version === 1) {
+        const ids = (value.resolved || []).map(function (n) {
+          return n.id;
+        });
+        if (ids.length > 0) {
+          window.shinyHierarchy.applySelectedIds(element, ids);
+        } else if (value.rollup && value.rollup.length > 0) {
+          window.shinyHierarchy.applySelectedIds(
+            element,
+            value.rollup.map(function (n) {
+              return n.id;
+            })
+          );
+        } else {
+          window.shinyHierarchy.clearSelection(element);
+        }
       }
-
-      $(el).trigger("change");
     },
 
-    subscribe: function (el, callback) {
-      $(el).on("change.hierarchyBinding", function () {
+    subscribe: function (element, callback) {
+      element._shinyHierarchyCallback = function () {
         callback(true);
-      });
+      };
+      element.addEventListener(
+        "shinyhierarchy:change",
+        element._shinyHierarchyCallback
+      );
     },
 
-    unsubscribe: function (el) {
-      $(el).off(".hierarchyBinding");
+    unsubscribe: function (element) {
+      if (element._shinyHierarchyCallback) {
+        element.removeEventListener(
+          "shinyhierarchy:change",
+          element._shinyHierarchyCallback
+        );
+        delete element._shinyHierarchyCallback;
+      }
+      if (element._outsideClickHandler) {
+        document.removeEventListener("click", element._outsideClickHandler);
+        delete element._outsideClickHandler;
+      }
+    },
+
+    receiveMessage: function (element, data) {
+      const config = element._hierarchyConfig || {};
+
+      if (data.tree && window.shinyHierarchy) {
+        const opts = {
+          levels: data.levels || config.levels || element._hierarchyLevels,
+          placeholder: config.placeholder,
+          display: config.display,
+          search: config.search,
+          searchPlaceholder: config.searchPlaceholder,
+          selectAll: config.selectAll,
+          selectAllLabel: config.selectAllLabel,
+          expand: config.expand,
+          selected: data.selected,
+          expanded: data.expanded
+        };
+        window.shinyHierarchy.render(element, data.tree, opts);
+      } else if (data.selected) {
+        window.shinyHierarchy.applySelectedIds(element, data.selected);
+      }
+
+      if (data.expanded && window.shinyHierarchy) {
+        window.shinyHierarchy.applyExpandedIds(element, data.expanded);
+      }
+
+      if (data.clear) {
+        window.shinyHierarchy.clearSelection(element);
+      }
+
+      if (data.open === true || data.open === false) {
+        const panel = element.querySelector(".shiny-hierarchy-panel");
+        const trigger = element.querySelector(".shiny-hierarchy-trigger");
+        if (panel && trigger) {
+          panel.hidden = !data.open;
+          trigger.setAttribute("aria-expanded", data.open ? "true" : "false");
+        }
+      }
+    },
+
+    initialize: function (element) {
+      const configEl = element.querySelector(".shiny-hierarchy-config");
+      const treeEl = element.querySelector(".shiny-hierarchy-tree-data");
+
+      if (!configEl || !treeEl || !window.shinyHierarchy) {
+        return;
+      }
+
+      const config = JSON.parse(configEl.textContent);
+      const tree = JSON.parse(treeEl.textContent);
+
+      element._hierarchyConfig = config;
+
+      window.shinyHierarchy.render(element, tree, {
+        levels: config.levels,
+        placeholder: config.placeholder,
+        display: config.display,
+        search: config.search,
+        searchPlaceholder: config.searchPlaceholder,
+        selectAll: config.selectAll,
+        selectAllLabel: config.selectAllLabel,
+        expand: config.expand,
+        selected: config.selected,
+        expanded: config.expanded
+      });
     }
   });
 
-  Shiny.inputBindings.register(hierarchyBinding, "shinyHierarchy.hierarchyInput");
+  Shiny.inputBindings.register(
+    hierarchyBinding,
+    "shinyHierarchy.hierarchyInput"
+  );
 })();

@@ -1,23 +1,26 @@
 Package: shinyHierarchy
-Title: Hierarchical Input Widget for Shiny
-Version: 0.0.0.9000
-Authors@R: 
-    person("Luis", "Rodriguez", email = "luisrodriguezacosta@gmail.com", role = c("aut", "cre"))
-Description: Provides a custom Shiny input for navigating and selecting
-    values from hierarchical data structures.
+Title: Hierarchical Input Component for Shiny
+Version: 0.1.0
+Authors@R:
+    person(
+      "Luis",
+      "Rodriguez",
+      email = "devmazter92@gmail.com",
+      role = c("aut", "cre")
+    )
+Description: Hierarchical slicer-style input for Shiny applications with
+    multi-selection, tri-state checkboxes, search, cascading selection,
+    and a structured selection value for analytics workflows.
 License: MIT + file LICENSE
 Encoding: UTF-8
-Language: en
 Roxygen: list(markdown = TRUE)
-Imports: 
+Depends:
+    R (>= 4.1.0)
+Imports:
+    shiny,
     htmltools,
-    jsonlite,
-    shiny
-Suggests: 
-    knitr,
-    pkgload,
-    rmarkdown,
+    jsonlite
+Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0

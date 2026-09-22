@@ -2,3 +2,8 @@
 ^shinyHierarchy\.Rproj$
 ^\.Rproj\.user$
 ^README\.Rmd$
+^app\.R$
+^package\.json$
+^bun\.lock$
+^node_modules$
+^tests/js$
